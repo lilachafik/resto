@@ -2,7 +2,25 @@
 
 מערכת לניהול לקוחות, מסעדות והזמנות, בנויה על [Supabase](https://supabase.com) עם ממשק HTML/CSS/JavaScript פשוט, בלי build.
 
-![מסך הכניסה](docs/screenshots/login.png)
+![פאנל ניהול – הזמנות](docs/screenshots/admin-orders.png)
+
+## צילומי מסך
+
+### פאנל ניהול (מנהל)
+
+| לקוחות | מסעדות |
+|---|---|
+| ![לקוחות](docs/screenshots/admin-customers.png) | ![מסעדות](docs/screenshots/admin-restaurants.png) |
+
+| הזמנה חדשה | מסך הכניסה |
+|---|---|
+| ![הזמנה חדשה](docs/screenshots/admin-new-order.png) | ![מסך הכניסה](docs/screenshots/login.png) |
+
+### מסך לקוח
+
+הלקוחה נועה כהן רואה רק את הפרטים ואת שתי ההזמנות שלה:
+
+![מסך לקוח](docs/screenshots/customer.png)
 
 ## מה יש במערכת
 
