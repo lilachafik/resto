@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resto</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Resto</h1>
+      <p class="subtitle">לקוחות, מסעדות והזמנות — ישירות מ-Supabase</p>
+    </div>
+    <div class="user-bar" id="user-bar" hidden>
+      <span class="role-badge" id="user-role"></span>
+      <span id="user-email" dir="ltr"></span>
+      <button type="button" id="change-pw-btn">שינוי סיסמה</button>
+      <button type="button" id="logout-btn">יציאה</button>
+    </div>
+  </header>
+
+  <section class="login" id="login-view" hidden>
+    <form id="login-form" class="login-card">
+      <h2>כניסה למערכת</h2>
+      <label>אימייל
+        <input name="email" type="email" dir="ltr" autocomplete="username" required>
+      </label>
+      <label>סיסמה
+        <input name="password" type="password" dir="ltr" autocomplete="current-password" required>
+      </label>
+      <p class="form-error" aria-live="polite"></p>
+      <button class="primary" type="submit">כניסה</button>
+    </form>
+  </section>
+
+  <!-- Customer: only their own details and orders (enforced by RLS) -->
+  <main id="customer-view" hidden>
+    <div class="profile">
+      <div id="customer-photo"></div>
+      <h2 class="view-title">שלום, <span id="customer-name"></span></h2>
+    </div>
+    <section class="details" id="customer-details"></section>
+
+    <section class="stats" aria-label="סיכום">
+      <div class="stat"><span class="stat-label">ההזמנות שלי</span><span class="stat-value" id="my-orders-count">—</span></div>
+      <div class="stat"><span class="stat-label">סה״כ (לא כולל בוטלו)</span><span class="stat-value" id="my-orders-total">—</span></div>
+    </section>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>מס׳</th><th>מסעדה</th><th>תאריך</th><th>סכום</th><th>מצב</th></tr>
+        </thead>
+        <tbody id="my-orders"></tbody>
+      </table>
+    </div>
+    <p class="message" id="customer-message"></p>
+  </main>
+
+  <!-- Signed in but no role and no linked customer -->
+  <main id="no-access-view" hidden>
+    <p class="message error">לחשבון הזה אין הרשאות במערכת. פנה למנהל.</p>
+  </main>
+
+  <!-- Admin panel: all data -->
+  <main id="app-view" hidden>
+    <h2 class="view-title">פאנל ניהול</h2>
+    <section class="stats" aria-label="סיכום">
+      <div class="stat"><span class="stat-label">לקוחות</span><span class="stat-value" id="stat-customers">—</span></div>
+      <div class="stat"><span class="stat-label">מסעדות</span><span class="stat-value" id="stat-restaurants">—</span></div>
+      <div class="stat"><span class="stat-label">הזמנות</span><span class="stat-value" id="stat-orders">—</span></div>
+      <div class="stat"><span class="stat-label">הכנסות (נמסרו)</span><span class="stat-value" id="stat-revenue">—</span></div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="orders" role="tab">הזמנות</button>
+      <button class="tab" data-tab="customers" role="tab">לקוחות</button>
+      <button class="tab" data-tab="restaurants" role="tab">מסעדות</button>
+    </nav>
+
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="חיפוש…" autocomplete="off">
+      <span class="count" id="row-count"></span>
+      <button class="primary" id="add-btn" type="button">+ הזמנה חדשה</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="message" id="message">טוען נתונים…</p>
+  </main>
+
+  <dialog id="customer-dialog">
+    <form id="customer-form" method="dialog">
+      <h2>לקוח חדש</h2>
+      <label>שם <span class="req">*</span>
+        <input name="name" required maxlength="100">
+      </label>
+      <label>אימייל
+        <input name="email" type="email" dir="ltr" maxlength="200">
+      </label>
+      <label>טלפון
+        <input name="phone" type="tel" dir="ltr" maxlength="30" pattern="[0-9+\- ]{7,}">
+      </label>
+      <label>כתובת
+        <input name="address" maxlength="200">
+      </label>
+      <p class="form-error" aria-live="polite"></p>
+      <div class="actions">
+        <button class="primary" type="submit">שמירה</button>
+        <button type="button" data-close>ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="order-dialog">
+    <form id="order-form" method="dialog">
+      <h2>הזמנה חדשה</h2>
+      <label>לקוח <span class="req">*</span>
+        <select name="customer_id" required></select>
+      </label>
+      <label>מסעדה <span class="req">*</span>
+        <select name="restaurant_id" required></select>
+      </label>
+      <label>סכום (₪) <span class="req">*</span>
+        <input name="total_amount" type="number" min="0" step="0.01" required dir="ltr">
+      </label>
+      <label>מצב
+        <select name="status">
+          <option value="pending">ממתינה</option>
+          <option value="preparing">בהכנה</option>
+          <option value="delivered">נמסרה</option>
+          <option value="cancelled">בוטלה</option>
+        </select>
+      </label>
+      <p class="form-error" aria-live="polite"></p>
+      <div class="actions">
+        <button class="primary" type="submit">שמירה</button>
+        <button type="button" data-close>ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="password-dialog">
+    <form id="password-form" method="dialog">
+      <h2>שינוי סיסמה</h2>
+      <label>סיסמה חדשה (לפחות 8 תווים)
+        <input name="password" type="password" dir="ltr" minlength="8" autocomplete="new-password" required>
+      </label>
+      <label>אימות סיסמה
+        <input name="confirm" type="password" dir="ltr" minlength="8" autocomplete="new-password" required>
+      </label>
+      <p class="form-error" aria-live="polite"></p>
+      <div class="actions">
+        <button class="primary" type="submit">שמירה</button>
+        <button type="button" data-close>ביטול</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"
+          integrity="sha384-Rj26LVGvoeRVR6+mwQmFfcR3QOBEwT+ZmuCWpuiqeTzJpCs0ER4ITAWGb4Hiy3Ok"
+          crossorigin="anonymous"></script>
+  <script src="app.js"></script>
+</body>
+</html>
